@@ -47,7 +47,7 @@ Ask in one message. Offer the defaults so the user can just say "defaults".
 | Link to send | required |
 | Trigger type | ask: keyword on one reel / any comment on one reel / keyword on any post |
 | Keyword(s) (if keyword trigger) | required for keyword triggers, e.g. `LINK` |
-| Which reel (if one reel) | URL of the reel, or "most recent" |
+| Which reel (if one reel) | URL of the reel, "most recent", or "not posted yet" (use Next Post or Reel) |
 | Opening DM | `Hey {First Name}, you wanted to get the link right?` |
 | Opening button | `Yes, send it` |
 | Link message + button | `Here you go 👇` / `Get the link 👇` |
@@ -57,8 +57,14 @@ Ask in one message. Offer the defaults so the user can just say "defaults".
 | Template share link | optional. If they have one, use Path A |
 | Flow name | `Comment DM - {keyword or reel topic}` |
 
-If the reel isn't posted yet: build and set everything except the trigger's
-post selection, then finish that part when they send the reel.
+If the reel isn't posted yet, use the trigger's **Next Post or Reel** option. ManyChat
+binds the automation to whatever goes up next on Instagram, so the user can build first
+and post straight after. Warn them to post nothing else on Instagram in between,
+otherwise the trigger attaches to the wrong post.
+
+If the user gives you the video instead of the keyword, take the keyword from the
+on-screen text or the frames. Don't trust a transcript alone: Whisper hears "claude"
+as "cloth".
 
 ## Step 1 — Preflight (tell the user, don't do it for them)
 
@@ -96,16 +102,24 @@ Work in the Flow Builder (visual canvas). Labels move around between ManyChat
 versions, so find controls by their visible text with `find` and don't rely on
 fixed coordinates.
 
+0. **Check for keyword clashes.** In Automations, click "Load more" and every "Show All"
+   row, then list the automations using the same keyword. Ones bound to a specific post are
+   fine, since each only fires on its own post. Only a LIVE automation on **any post** with
+   the same keyword clashes. Ask the user before pausing it, and never delete it.
 1. **New flow.** Go to `https://app.manychat.com/fb<ID>/cms` → New Automation → Start from scratch.
    Rename it to the flow name.
 2. **Trigger.** Add Trigger → Instagram → **User comments on your Post or Reel**.
-   - Post: specific post (pick the reel), or any post, based on the trigger type.
+   - Post: specific post (pick the reel), **Next Post or Reel** (reel not posted yet), or
+     any post, based on the trigger type.
    - Keywords: "contains" + the keyword(s), or "any word" for any-comment.
    - Turn ON **reply to comments** publicly and add the public reply variations.
    - Save.
 3. **DM 1.** The trigger connects to an Instagram Send Message node. Text = opening DM.
    Insert First Name through the variable picker (`{}` icon); don't type braces by hand.
-   Add button = opening button text.
+   Add button = opening button text. Use a regular message button whose next step is the
+   Condition, not a website button. ManyChat counts the tap as a reply, which opens the
+   24-hour window. If this DM shows no "Next Step" option and a website button only offers
+   actions, that's the private-reply limit: the opener button is the only way forward.
 4. **Condition.** Drag the button's connector → Condition. Rule: Instagram follower status,
    shown as "Is follower" or "Follows your account". Search the condition list for "follow".
    If no follow condition exists in this account, stop and tell the user. Don't fake it.
@@ -126,6 +140,8 @@ Open every node and confirm against the inputs:
 - the Smart Delay is 1 hour, not 1 day
 - no leftover empty "New Button" buttons
 - the flow is LIVE
+- if you used Next Post or Reel: after the reel goes up, the automations list shows the
+  trigger bound to a specific post with its thumbnail. Check the thumbnail is the right reel.
 
 ## Step 5 — Test
 
@@ -150,6 +166,10 @@ bump after 1 hour. Report what actually happened, step by step.
       return new Response(JSON.stringify({status:'success',data:[]}),{status:200,headers:{'Content-Type':'application/json'}});
     return of.apply(this,a); };
   ```
+- If the canvas still won't load (common when the Chrome window is in the background),
+  build in ManyChat's **Basic Builder** instead. It edits the same automation: messages,
+  buttons, condition, Smart Delay and loop-back all work there. Afterwards, check the
+  Flow Builder view shows every link.
 - If the save button still says Update after editing, click it before moving on.
 - If the session expires, stop and ask the user to log in. Never enter credentials.
 
